@@ -79,12 +79,14 @@ public class SybilAttackInterestRouter extends BubbleRapInterestRouter {
                     otherEcField.setAccessible(true);
                     Map<DTNHost, Integer> otherEncounterCount = (Map<DTNHost, Integer>) otherEcField.get(otherRouter);
                     
+                    int currentCount = otherEncounterCount.getOrDefault(getHost(), 0);
+                    otherEncounterCount.put(getHost(), currentCount + nrofFakeIds);
+                    
+                    // Also inject into familiarSet (symmetric with SybilAttackRouter)
                     Field otherFsField = BubbleRapRouter.class.getDeclaredField("familiarSet");
                     otherFsField.setAccessible(true);
                     Set<DTNHost> otherFamiliarSet = (Set<DTNHost>) otherFsField.get(otherRouter);
-                    
-                    int currentCount = otherEncounterCount.getOrDefault(getHost(), 0);
-                    otherEncounterCount.put(getHost(), currentCount + nrofFakeIds);
+                    otherFamiliarSet.add(getHost());
                 } catch (Exception e) {
                     System.err.println("SybilAttackInterestRouter reflection injection failed: " + e.getMessage());
                 }

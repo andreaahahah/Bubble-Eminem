@@ -205,13 +205,27 @@ public class BubbleRapRouter extends ActiveRouter {
             return;
         }
         
-        // Sort candidates by other node's localRank (descending)
+        // Sort candidates by other node's localRank (descending), penalizing greylisted nodes
         candidates.sort(new Comparator<Tuple<Message, Connection>>() {
             @Override
             public int compare(Tuple<Message, Connection> t1, Tuple<Message, Connection> t2) {
-                BubbleRapRouter r1 = (BubbleRapRouter) t1.getValue().getOtherNode(getHost()).getRouter();
-                BubbleRapRouter r2 = (BubbleRapRouter) t2.getValue().getOtherNode(getHost()).getRouter();
-                return Integer.compare(r2.getLocalRank(), r1.getLocalRank());
+                DTNHost h1 = t1.getValue().getOtherNode(getHost());
+                DTNHost h2 = t2.getValue().getOtherNode(getHost());
+                BubbleRapRouter r1 = (BubbleRapRouter) h1.getRouter();
+                BubbleRapRouter r2 = (BubbleRapRouter) h2.getRouter();
+                
+                int rank1 = r1.getLocalRank();
+                int rank2 = r2.getLocalRank();
+                
+                // Penalize greylisted nodes: halve their effective rank
+                if (reputationEnabled && isGreyListed(h1)) {
+                    rank1 = rank1 / 2;
+                }
+                if (reputationEnabled && isGreyListed(h2)) {
+                    rank2 = rank2 / 2;
+                }
+                
+                return Integer.compare(rank2, rank1);
             }
         });
         

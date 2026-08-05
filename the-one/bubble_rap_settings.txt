@@ -190,12 +190,13 @@ MapBasedMovement.mapFile4 = data/shops.wkt
 ## ===================================================================
 ## Reports
 ## ===================================================================
-Report.nrofReports = 3
+Report.nrofReports = 4
 Report.warmup = 0
 Report.reportDir = reports/
 Report.report1 = MessageStatsReport
 Report.report2 = BubbleRapReport
 Report.report3 = ContactTimesReport
+Report.report4 = BufferOccupancyReport
 
 ## ===================================================================
 ## Optimization Settings

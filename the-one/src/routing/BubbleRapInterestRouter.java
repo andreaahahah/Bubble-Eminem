@@ -266,7 +266,8 @@ public class BubbleRapInterestRouter extends BubbleRapRouter {
         }
         
         if (!topInterests.isEmpty()) {
-            Random rand = new Random();
+            // Deterministic seed from host address for reproducibility
+            Random rand = new Random(getHost().getAddress());
             double totalWeight = 0.0;
             for (String interest : topInterests) {
                 totalWeight += interestProfile.get(interest);

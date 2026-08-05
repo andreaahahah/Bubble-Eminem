@@ -1,0 +1,213 @@
+#
+# Bubble Rap Sybil+BufferOverflow Scenario Configuration
+# =====================================================
+# Progetto Network Security - Università della Calabria
+#
+# 6 scenari gestiti tramite run arrays [val1;val2;...]:
+# Run 0: S1 - BubbleRap Standard, NO attacco, NO mitigazione
+# Run 1: S2 - BubbleRap Standard, CON attacco, SENZA mitigazione (reputation disabled)
+# Run 2: S3 - BubbleRap Standard, CON attacco, CON mitigazione (reputation enabled)
+# Run 3: S4 - BubbleRap Interest, NO attacco, NO mitigazione
+# Run 4: S5 - BubbleRap Interest, CON attacco, SENZA mitigazione (interest trust disabled)
+# Run 5: S6 - BubbleRap Interest, CON attacco, CON mitigazione (interest trust enabled)
+#
+# Esecuzione: ./one.sh -b <run_index> bubble_rap_settings.txt
+# Esempio:    ./one.sh -b 0 bubble_rap_settings.txt   (scenario S1 baseline)
+#             ./one.sh -b 2 bubble_rap_settings.txt   (scenario S3 con mitigazione)
+#
+
+## ===================================================================
+## Scenario Settings
+## ===================================================================
+Scenario.name = BubbleRap_[S1_Baseline;S2_Attack_NoMit;S3_Attack_ReputMit;S4_Interest_Baseline;S5_Interest_Attack_NoMit;S6_Interest_Attack_IntMit]
+Scenario.simulateConnections = true
+Scenario.updateInterval = 0.1
+# 43200s == 12h
+Scenario.endTime = 43200
+
+# Scenari S1-S3: 6 gruppi (3 legittimi + 1 malevolo opzionale + 2 tram)
+# Scenari S4-S6: 6 gruppi (3 legittimi + 1 malevolo opzionale + 2 tram)
+Scenario.nrofHostGroups = [6;7;7;6;7;7]
+
+## ===================================================================
+## Interface Settings
+## ===================================================================
+
+# Bluetooth interface for all nodes
+btInterface.type = SimpleBroadcastInterface
+btInterface.transmitSpeed = 250k
+btInterface.transmitRange = 10
+
+# High speed, long range interface for tram nodes
+highspeedInterface.type = SimpleBroadcastInterface
+highspeedInterface.transmitSpeed = 10M
+highspeedInterface.transmitRange = 1000
+
+## ===================================================================
+## Common Group Settings (defaults for all groups)
+## ===================================================================
+Group.movementModel = ShortestPathMapBasedMovement
+Group.router = [BubbleRapRouter;BubbleRapRouter;BubbleRapRouter;BubbleRapInterestRouter;BubbleRapInterestRouter;BubbleRapInterestRouter]
+Group.bufferSize = 5M
+Group.waitTime = 0, 120
+Group.nrofInterfaces = 1
+Group.interface1 = btInterface
+Group.speed = 0.5, 1.5
+Group.msgTtl = 300
+Group.nrofHosts = 40
+
+## ===================================================================
+## Group 1: Pedestrians (legitimate)
+## ===================================================================
+Group1.groupID = p
+Group1.nrofHosts = 40
+
+## ===================================================================
+## Group 2: Cars (legitimate)
+## ===================================================================
+Group2.groupID = c
+Group2.okMaps = 1
+Group2.speed = 2.7, 13.9
+Group2.nrofHosts = 40
+
+## ===================================================================
+## Group 3: Walkers (legitimate)
+## ===================================================================
+Group3.groupID = w
+Group3.nrofHosts = 40
+
+## ===================================================================
+## Group 4: Tram Line 3 (legitimate, high buffer)
+## ===================================================================
+Group4.groupID = t
+Group4.bufferSize = 50M
+Group4.movementModel = MapRouteMovement
+Group4.routeFile = data/tram3.wkt
+Group4.routeType = 1
+Group4.waitTime = 10, 30
+Group4.speed = 7, 10
+Group4.nrofHosts = 2
+Group4.nrofInterfaces = 2
+Group4.interface1 = btInterface
+Group4.interface2 = highspeedInterface
+
+## ===================================================================
+## Group 5: Tram Line 4 (legitimate, high buffer)
+## ===================================================================
+Group5.groupID = t
+Group5.bufferSize = 50M
+Group5.movementModel = MapRouteMovement
+Group5.routeFile = data/tram4.wkt
+Group5.routeType = 2
+Group5.waitTime = 10, 30
+Group5.speed = 7, 10
+Group5.nrofHosts = 2
+
+## ===================================================================
+## Group 6: Tram Line 10 (legitimate, high buffer)
+## ===================================================================
+Group6.groupID = t
+Group6.bufferSize = 50M
+Group6.movementModel = MapRouteMovement
+Group6.routeFile = data/tram10.wkt
+Group6.routeType = 2
+Group6.waitTime = 10, 30
+Group6.speed = 7, 10
+Group6.nrofHosts = 2
+
+## ===================================================================
+## Group 7: Malicious Sybil Nodes (only active in attack scenarios)
+## ===================================================================
+# This group only exists in runs 1,2,4,5 (attack scenarios)
+# In baseline runs (0,3) this group is not loaded because nrofHostGroups=6
+Group7.groupID = m
+Group7.nrofHosts = 10
+Group7.router = [BubbleRapRouter;SybilAttackRouter;SybilAttackRouter;BubbleRapInterestRouter;SybilAttackInterestRouter;SybilAttackInterestRouter]
+Group7.bufferSize = 5M
+Group7.speed = 0.5, 1.5
+
+## ===================================================================
+## BubbleRapRouter Settings
+## ===================================================================
+BubbleRapRouter.familiarThreshold = 5
+BubbleRapRouter.centralityWindow = 21600
+# Reputation: disabled for S1(baseline),S2(attack no mit); enabled for S3(mit)
+# For S4-S6 the Interest router inherits these + adds interest trust
+BubbleRapRouter.reputationEnabled = [false;false;true;false;false;true]
+BubbleRapRouter.greyThreshold = 0.4
+BubbleRapRouter.blackThreshold = 0.2
+
+## ===================================================================
+## BubbleRapInterestRouter Settings (only used in runs 3-5)
+## ===================================================================
+BubbleRapInterestRouter.nrofInterests = 5
+BubbleRapInterestRouter.interests = sport,news,music,tech,health
+BubbleRapInterestRouter.interestTrustThreshold = [0.0;0.0;0.0;0.0;0.0;0.3]
+
+## ===================================================================
+## SybilAttackRouter Settings (used by malicious Group7)
+## ===================================================================
+SybilAttackRouter.nrofFakeIds = 10
+SybilAttackRouter.garbageInterval = 5
+SybilAttackRouter.garbageSize = 500k
+SybilAttackRouter.targetHighCentrality = true
+
+## ===================================================================
+## SybilAttackInterestRouter Settings (used by malicious Group7 in interest scenarios)
+## ===================================================================
+SybilAttackInterestRouter.nrofFakeIds = 10
+SybilAttackInterestRouter.garbageInterval = 5
+SybilAttackInterestRouter.garbageSize = 500k
+SybilAttackInterestRouter.targetHighCentrality = true
+
+## ===================================================================
+## Message Creation Parameters
+## ===================================================================
+Events.nrof = 1
+Events1.class = MessageEventGenerator
+# One new message every 25-35 seconds
+Events1.interval = 25,35
+# Message sizes: 500KB - 1MB
+Events1.size = 500k,1M
+# Source/destination range: all legitimate nodes (0-125, excludes malicious)
+Events1.hosts = 0,[125;125;125;125;125;125]
+Events1.prefix = M
+
+## ===================================================================
+## Movement Model Settings
+## ===================================================================
+MovementModel.rngSeed = 1
+MovementModel.worldSize = 4500, 3400
+MovementModel.warmup = 1000
+
+## Map based movement settings
+MapBasedMovement.nrofMapFiles = 4
+MapBasedMovement.mapFile1 = data/roads.wkt
+MapBasedMovement.mapFile2 = data/main_roads.wkt
+MapBasedMovement.mapFile3 = data/pedestrian_paths.wkt
+MapBasedMovement.mapFile4 = data/shops.wkt
+
+## ===================================================================
+## Reports
+## ===================================================================
+Report.nrofReports = 3
+Report.warmup = 0
+Report.reportDir = reports/
+Report.report1 = MessageStatsReport
+Report.report2 = BubbleRapReport
+Report.report3 = ContactTimesReport
+
+## ===================================================================
+## Optimization Settings
+## ===================================================================
+Optimization.cellSizeMult = 5
+Optimization.randomizeUpdateOrder = true
+
+## ===================================================================
+## GUI Settings
+## ===================================================================
+GUI.UnderlayImage.fileName = data/helsinki_underlay.png
+GUI.UnderlayImage.offset = 64, 20
+GUI.UnderlayImage.scale = 4.75
+GUI.UnderlayImage.rotate = -0.015
+GUI.EventLogPanel.nrofEvents = 100

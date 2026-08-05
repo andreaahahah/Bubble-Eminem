@@ -8,6 +8,4 @@
 
 # Log delle simulazioni (per non saturare GitHub)
 
-*.txt
-
 *.log
